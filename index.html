@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap" rel="stylesheet">
   <meta charset="UTF-8" />
-  <title>Money Counter</title>
+  <title>Monitor</title>
   <style>
     body {
-      font-family: 'Fira Mono', 'Consolas', 'Courier New', monospace;
+      font-family: 'Impact', monospace;
       text-align: right;
       padding-top: 100px;
       background-color: #f4f4f4;
-      font-size: 48px;
+      font-size: 40px;
       width: 600px;
     }
     #bond {
@@ -18,14 +19,18 @@
     #debt {
       color: red;
     }
+    .mechanical-counter {
+      font-weight: bold;
+      font-family: 'Courier Prime', serif;
+    }
   </style>
 </head>
 <body>
   Állampapír:<br />
-  <span id="bond">-</span><br />
+  <span id="bond" class="mechanical-counter">-</span><br />
   <br />
   Jelzálogitel:<br />
-  <span id="debt">-</span>
+  <span id="debt" class="mechanical-counter">-</span>
 
   <script>
     const debtEndDate = new Date('2028-10-01T00:00:00');
@@ -35,11 +40,11 @@
       const now = new Date();
       const bond = 30000000 + 30000000 * 1.73 / 100 / 90 / 24 / 3600 * (now - bondStartDate) / 1000;
       const debt = 380855 / 30 / 24 / 3600 * (now - debtEndDate) / 1000;
-      document.getElementById("bond").textContent = bond.toLocaleString('hu-HU', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
-      document.getElementById("debt").textContent = debt.toLocaleString('hu-HU', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+      document.getElementById("bond").textContent = bond.toLocaleString('hu-HU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById("debt").textContent = debt.toLocaleString('hu-HU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
     updateValues();
-    setInterval(updateValues, 100);
+    setInterval(updateValues, 1);
   </script>
 </body>
 </html>
