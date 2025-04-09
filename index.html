@@ -7,11 +7,9 @@
   <style>
     body {
       font-family: 'Arial', sans-serif;
-      text-align: right;
       padding-top: 100px;
       background-color: #f4f4f4;
       font-size: 40px;
-      width: 600px;
     }
     #bond {
       color: green;
@@ -19,33 +17,65 @@
     #debt {
       color: red;
     }
+    #bill {
+      color: blue;
+    }
     .mechanical-counter {
       font-weight: bold;
       font-family: 'Courier Prime', serif;
       letter-spacing: -0.12em;
+      width: 400px;
+      text-align: right;
+    }
+    .info {
+      font-size: 20px;
+      text-align: right;
+      width: 400px;
     }
   </style>
 </head>
 <body>
-  Állampapír:<br />
-  <span id="bond" class="mechanical-counter">-</span><br />
+  <div class="info">Állampapír</div>
+  <div id="bond" class="mechanical-counter"></div>
+  <div class="info" id="bondDaily"></div>
   <br />
-  Jelzálogitel:<br />
-  <span id="debt" class="mechanical-counter">-</span>
+  <div class="info">Lakáshitel</div>
+  <div id="debt" class="mechanical-counter"></div>
+  <div class="info" id="debtDaily"></div>
+  <br />
+  <div class="info">Global Blue</div>
+  <div id="bill" class="mechanical-counter"></div>
+  <div class="info" id="billDaily"></div>
 
   <script>
-    const debtEndDate = new Date('2028-10-01T00:00:00');
+
     const bondStartDate = new Date('2025-04-03T00:00:00');
+    const debtEndDate = new Date('2028-10-01T00:00:00');
+    const billStartDate = new Date('2025-01-01T00:00:00');
+
+    const bondDaily = 519000 / 90;
+    const debtDaily = 380855 / 30;
+    const billDaily = 19250  * 390 / 90;
+
+    document.getElementById("bondDaily").textContent = '+' + formatNumber(bondDaily * 30, 0) + ' Ft/hó';
+    document.getElementById("debtDaily").textContent = '-' + formatNumber(debtDaily * 30, 0) + ' Ft/hó';
+    document.getElementById("billDaily").textContent = '+' + formatNumber(billDaily * 30, 0) + ' Ft/hó';
 
     function updateValues() {
       const now = new Date();
-      const bond = 30000000 + 30000000 * 1.73 / 100 / 90 / 24 / 3600 * (now - bondStartDate) / 1000;
-      const debt = 380855 / 30 / 24 / 3600 * (now - debtEndDate) / 1000;
-      document.getElementById("bond").textContent = bond.toLocaleString('hu-HU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      document.getElementById("debt").textContent = debt.toLocaleString('hu-HU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const bond = 30000000 + bondDaily / 24 / 3600 * (now - bondStartDate) / 1000;
+      const debt = debtDaily / 24 / 3600 * (now - debtEndDate) / 1000;
+      const bill = billDaily / 24 / 3600 * (now - billStartDate) / 1000;
+      document.getElementById("bond").textContent = formatNumber(bond, 2);
+      document.getElementById("debt").textContent = formatNumber(debt, 2);
+      document.getElementById("bill").textContent = formatNumber(bill, 2);
     }
     updateValues();
     setInterval(updateValues, 1);
+
+    function formatNumber(num, digits) {
+      return num.toLocaleString('hu-HU', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    }
   </script>
 </body>
 </html>
