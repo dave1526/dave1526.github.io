@@ -209,33 +209,30 @@
             inset: 0;
             z-index: 999;
             cursor: crosshair;
+            background: transparent;
         }
 
         .radial-num {
             position: fixed;
-            /* bigger circles */
             width: min(64px, 11vmin);
             height: min(64px, 11vmin);
             border-radius: 50%;
-            /* dark base with white text */
-            background: #1f2933;
-            border: 2px solid #111820;
+            background: transparent;
+            border: none;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: min(1.6rem, 5vmin);
-            font-weight: bold;
-            color: #ffffff;
+            font-size: 0;
+            color: transparent;
             transform: translate(-50%, -50%);
             pointer-events: none;
             z-index: 1001;
-            transition: background 0.1s, color 0.1s, border-color 0.1s;
         }
 
         .radial-num.hovered {
-            background: #2f80ed;
-            color: #ffffff;
-            border-color: #2f80ed;
+            background: transparent;
+            color: transparent;
+            border-color: transparent;
         }
 
         /* remove center-dot styling and add preview style */
