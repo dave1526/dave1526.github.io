@@ -1,81 +1,770 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap" rel="stylesheet">
-  <meta charset="UTF-8" />
-  <title>Monitor</title>
-  <style>
-    body {
-      font-family: 'Arial', sans-serif;
-      padding-top: 100px;
-      background-color: #f4f4f4;
-      font-size: 40px;
-    }
-    #bond {
-      color: green;
-    }
-    #debt {
-      color: red;
-    }
-    #bill {
-      color: blue;
-    }
-    .mechanical-counter {
-      font-weight: bold;
-      font-family: 'Courier Prime', serif;
-      letter-spacing: -0.12em;
-      width: 400px;
-      text-align: right;
-    }
-    .info {
-      font-size: 20px;
-      text-align: right;
-      width: 400px;
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Mini Sudoku</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,
+%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E
+%3Crect x='1' y='1' width='30' height='30' rx='2' fill='%23fff' stroke='%23222' stroke-width='2'/%3E
+%3C!-- thin grid lines 6x6 --%3E
+%3Cline x1='6' y1='1' x2='6' y2='31' stroke='%23aaa' stroke-width='0.5'/%3E
+%3Cline x1='11' y1='1' x2='11' y2='31' stroke='%23aaa' stroke-width='0.5'/%3E
+%3Cline x1='16' y1='1' x2='16' y2='31' stroke='%23aaa' stroke-width='0.5'/%3E
+%3Cline x1='21' y1='1' x2='21' y2='31' stroke='%23aaa' stroke-width='0.5'/%3E
+%3Cline x1='26' y1='1' x2='26' y2='31' stroke='%23aaa' stroke-width='0.5'/%3E
+%3Cline x1='1' y1='6' x2='31' y2='6' stroke='%23aaa' stroke-width='0.5'/%3E
+%3Cline x1='1' y1='11' x2='31' y2='11' stroke='%23aaa' stroke-width='0.5'/%3E
+%3Cline x1='1' y1='16' x2='31' y2='16' stroke='%23aaa' stroke-width='0.5'/%3E
+%3Cline x1='1' y1='21' x2='31' y2='21' stroke='%23aaa' stroke-width='0.5'/%3E
+%3Cline x1='1' y1='26' x2='31' y2='26' stroke='%23aaa' stroke-width='0.5'/%3E
+%3C!-- thick 3x2 section borders --%3E
+%3Cline x1='16' y1='1' x2='16' y2='31' stroke='%23222' stroke-width='1.5'/%3E
+%3Cline x1='1' y1='11' x2='31' y2='11' stroke='%23222' stroke-width='1.5'/%3E
+%3Cline x1='1' y1='21' x2='31' y2='21' stroke='%23222' stroke-width='1.5'/%3E
+%3C!-- some sample digits --%3E
+%3Ctext x='3.5' y='9.5' font-size='4.5' font-family='sans-serif' font-weight='bold' fill='%23163062'%3E3%3C/text%3E
+%3Ctext x='13.5' y='9.5' font-size='4.5' font-family='sans-serif' font-weight='bold' fill='%23163062'%3E1%3C/text%3E
+%3Ctext x='23.5' y='19.5' font-size='4.5' font-family='sans-serif' font-weight='bold' fill='%23163062'%3E5%3C/text%3E
+%3Ctext x='8.5' y='24.5' font-size='4.5' font-family='sans-serif' font-weight='bold' fill='%23163062'%3E2%3C/text%3E
+%3Ctext x='18.5' y='29.5' font-size='4.5' font-family='sans-serif' font-weight='bold' fill='%23163062'%3E4%3C/text%3E
+%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Righteous&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cell-size: min(72px, 12vmin);
+            --font-cell: min(2.2rem, 6.5vmin);
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100dvh;
+            margin: 0;
+            padding: min(100px, 18vmin);
+            box-sizing: border-box;
+            background: #f0f0f0;
+            font-family: sans-serif;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        /* NEW: title and header layout */
+        #header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+
+        /* cooler Mini Sudoku title */
+        #title {
+            font-family: 'Righteous', cursive;
+            font-size: min(2.4rem, 9vmin);
+            font-weight: 800;
+            letter-spacing: 0.03em;
+            color: #163062;
+            padding: 0;
+            border-radius: 0;
+            background: none;
+            border: none;
+        }
+
+        /* cooler timer under the title */
+        #timer {
+            margin-top: 0.45rem;
+            font-size: min(1.5rem, 5.5vmin);
+            color: #1d3557;
+            padding: 0.2rem 1.1rem;
+            border-radius: 999px;
+            background:
+                linear-gradient(135deg, rgba(255,255,255,0.95), rgba(232,244,255,0.95)),
+                radial-gradient(circle at 0 0, rgba(27,123,214,0.15), transparent 55%);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+        }
+        /* small dot before time for subtle style */
+        #timer::before {
+            content: "";
+            width: 0.4rem;
+            height: 0.4rem;
+            border-radius: 50%;
+            background: #1b7bd6;
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+
+        /* solved timer style */
+        #timer.solved {
+            color: #1a7a45;
+            font-weight: bold;
+            background:
+                linear-gradient(135deg, rgba(255,255,255,0.95), rgba(220,255,235,0.95)),
+                radial-gradient(circle at 0 0, rgba(39,174,96,0.18), transparent 55%);
+            box-shadow:
+                0 2px 10px rgba(39,174,96,0.35),
+                0 0 0 1px rgba(255,255,255,0.7) inset;
+        }
+        #timer.solved::before {
+            background: #27ae60;
+            box-shadow: 0 0 8px rgba(39,174,96,0.9);
+        }
+
+        #grid {
+            display: grid;
+            grid-template-columns: repeat(6, var(--cell-size));
+            grid-template-rows: repeat(6, var(--cell-size));
+            gap: 0;
+            border: 3px solid #000;
+        }
+
+        /* SVG-only New Game button under grid */
+        #reset-btn {
+            margin-top: 0.8rem;
+            padding: 0.6rem;
+            border-radius: 999px;
+            border: none;
+            background: #0b1e56;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.1s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #reset-btn:hover {
+            filter: brightness(1.08);
+            box-shadow: 0 5px 16px rgba(0,0,0,0.3);
+            transform: translateY(-1px);
+        }
+        #reset-btn:active {
+            transform: translateY(1px) scale(0.98);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        /* bigger, clearer clockwise arrow with defined arrow head */
+        #reset-btn svg {
+            width: min(2.1rem, 6.5vmin);
+            height: min(2.1rem, 6.5vmin);
+            fill: none;
+            stroke: #ffffff;
+            stroke-width: 2.2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .cell {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            border: 1px solid #444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-cell);
+            font-weight: bold;
+            color: #222;
+            cursor: pointer;
+            background: #fff;
+            box-sizing: border-box;
+        }
+
+        .cell.given {
+            color: #0d2d6b;
+            cursor: default;
+            background: #e8ecf4;
+        }
+
+        .cell.solved {
+            color: #145a32;
+            cursor: default;
+            background: #d5f5e3;
+        }
+
+        /* NEW: for any rule-breaking manual cell */
+        .cell.invalid {
+            color: #c0392b;
+            background: #ffd6de;
+        }
+
+        .cell.wrong {
+            color: #c0392b;
+        }
+
+        .cell:nth-child(6n+3) {
+            border-right: 3px solid #000;
+        }
+
+        .cell:nth-child(n+7):nth-child(-n+12),
+        .cell:nth-child(n+19):nth-child(-n+24) {
+            border-bottom: 3px solid #000;
+        }
+
+        #radial-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            cursor: crosshair;
+        }
+
+        .radial-num {
+            position: fixed;
+            /* bigger circles */
+            width: min(64px, 11vmin);
+            height: min(64px, 11vmin);
+            border-radius: 50%;
+            /* dark base with white text */
+            background: #1f2933;
+            border: 2px solid #111820;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: min(1.6rem, 5vmin);
+            font-weight: bold;
+            color: #ffffff;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 1001;
+            transition: background 0.1s, color 0.1s, border-color 0.1s;
+        }
+
+        .radial-num.hovered {
+            background: #2f80ed;
+            color: #ffffff;
+            border-color: #2f80ed;
+        }
+
+        /* remove center-dot styling and add preview style */
+        /* #radial-center removed */
+        .cell.preview {
+            color: #6b7280;
+            background: #eef1f6;
+        }
+    </style>
 </head>
 <body>
-  <div class="info">Állampapír</div>
-  <div id="bond" class="mechanical-counter"></div>
-  <div class="info" id="bondDaily"></div>
-  <br />
-  <div class="info">Lakáshitel</div>
-  <div id="debt" class="mechanical-counter"></div>
-  <div class="info" id="debtDaily"></div>
-  <br />
-  <div class="info">Global Blue</div>
-  <div id="bill" class="mechanical-counter"></div>
-  <div class="info" id="billDaily"></div>
 
-  <script>
+<!-- NEW: header with title and timer -->
+<div id="header">
+    <div id="title">Mini Sudoku</div>
+    <div id="timer">00:00</div>
+</div>
 
-    const bondStartDate = new Date('2025-04-03T00:00:00');
-    const debtEndDate = new Date('2028-10-01T00:00:00');
-    const billStartDate = new Date('2025-01-01T00:00:00');
+<div id="grid"></div>
+<button id="reset-btn" type="button">
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M4.5 12 A7.5 7.5 0 1 1 12 19.5" />
+        <!-- left-pointing right triangle arrowhead -->
+        <polygon points="8,19.5 13.5,15 13.5,24" fill="#ffffff" />
+    </svg>
+</button>
 
-    const bondDaily = 519000 / 90;
-    const debtDaily = 380855 / 30;
-    const billDaily = 19250  * 390 / 90;
+<div id="radial-overlay">
+    <!-- center dot removed -->
+    <div class="radial-num" data-value="1">1</div>
+    <div class="radial-num" data-value="2">2</div>
+    <div class="radial-num" data-value="3">3</div>
+    <div class="radial-num" data-value="4">4</div>
+    <div class="radial-num" data-value="5">5</div>
+    <div class="radial-num" data-value="6">6</div>
+</div>
 
-    document.getElementById("bondDaily").textContent = '+' + formatNumber(bondDaily * 30, 0) + ' Ft/hó';
-    document.getElementById("debtDaily").textContent = '-' + formatNumber(debtDaily * 30, 0) + ' Ft/hó';
-    document.getElementById("billDaily").textContent = '+' + formatNumber(billDaily * 30, 0) + ' Ft/hó';
-
-    function updateValues() {
-      const now = new Date();
-      const bond = 30000000 + bondDaily / 24 / 3600 * (now - bondStartDate) / 1000;
-      const debt = debtDaily / 24 / 3600 * (now - debtEndDate) / 1000;
-      const bill = billDaily / 24 / 3600 * (now - billStartDate) / 1000;
-      document.getElementById("bond").textContent = formatNumber(bond, 2);
-      document.getElementById("debt").textContent = formatNumber(debt, 2);
-      document.getElementById("bill").textContent = formatNumber(bill, 2);
+<script>
+    // ── 6×6 Sudoku Generator ───────────────────────────────────────────────
+    function shuffle(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
     }
-    updateValues();
-    setInterval(updateValues, 1);
 
-    function formatNumber(num, digits) {
-      return num.toLocaleString('hu-HU', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    function isValid(board, row, col, num) {
+        for (let c = 0; c < 6; c++) if (board[row][c] === num) return false;
+        for (let r = 0; r < 6; r++) if (board[r][col] === num) return false;
+        const br = Math.floor(row / 2) * 2, bc = Math.floor(col / 3) * 3;
+        for (let r = br; r < br + 2; r++)
+            for (let c = bc; c < bc + 3; c++)
+                if (board[r][c] === num) return false;
+        return true;
     }
-  </script>
+
+    function solve(board) {
+        for (let r = 0; r < 6; r++) {
+            for (let c = 0; c < 6; c++) {
+                if (board[r][c] === 0) {
+                    const nums = shuffle([1,2,3,4,5,6]);
+                    for (const n of nums) {
+                        if (isValid(board, r, c, n)) {
+                            board[r][c] = n;
+                            if (solve(board)) return true;
+                            board[r][c] = 0;
+                        }
+                    }
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    function countSolutions(board, limit) {
+        let count = 0;
+        function go() {
+            for (let r = 0; r < 6; r++) {
+                for (let c = 0; c < 6; c++) {
+                    if (board[r][c] === 0) {
+                        for (let n = 1; n <= 6; n++) {
+                            if (isValid(board, r, c, n)) {
+                                board[r][c] = n;
+                                go();
+                                board[r][c] = 0;
+                                if (count >= limit) return;
+                            }
+                        }
+                        return;
+                    }
+                }
+            }
+            count++;
+        }
+        go();
+        return count;
+    }
+
+    function generatePuzzle() {
+        // Generate a full solution
+        const solution = Array.from({length:6}, () => Array(6).fill(0));
+        solve(solution);
+
+        // Copy and remove cells for a medium-hard puzzle (14-16 givens = 20-22 blanks)
+        const puzzle = solution.map(r => [...r]);
+        const positions = shuffle([...Array(36).keys()]);
+        let removed = 0;
+        const targetBlanks = 20 + Math.floor(Math.random() * 3); // 20-22 blanks
+
+        for (const pos of positions) {
+            if (removed >= targetBlanks) break;
+            const r = Math.floor(pos / 6), c = pos % 6;
+            const backup = puzzle[r][c];
+            puzzle[r][c] = 0;
+            if (countSolutions(puzzle.map(r=>[...r]), 2) === 1) {
+                removed++;
+            } else {
+                puzzle[r][c] = backup;
+            }
+        }
+
+        return { solution, puzzle };
+    }
+
+    // ── Persistence helpers ────────────────────────────────────────────────
+    const STORAGE_KEY = 'radial-sudoku-6x6-state';
+
+    function saveState(state) {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (e) {
+            // ignore storage errors
+        }
+    }
+
+    function loadState() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            return raw ? JSON.parse(raw) : null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function clearState() {
+        try {
+            localStorage.removeItem(STORAGE_KEY);
+        } catch (e) {}
+    }
+
+    // ── Build grid & game ──────────────────────────────────────────────────
+    const persisted = loadState();
+
+    let solution, puzzle;
+    if (persisted && persisted.solution && persisted.puzzle) {
+        solution = persisted.solution;
+        puzzle   = persisted.puzzle;
+    } else {
+        const gen = generatePuzzle();
+        solution = gen.solution;
+        puzzle   = gen.puzzle;
+    }
+
+    const grid = document.getElementById('grid');
+    const cellData = []; // { el, row, col, given }
+
+    // build empty DOM cells
+    for (let i = 0; i < 36; i++) {
+        const r = Math.floor(i / 6), c = i % 6;
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        const given = puzzle[r][c] !== 0;
+        grid.appendChild(cell);
+        cellData.push({ el: cell, row: r, col: c, given });
+    }
+
+    // apply initial values (either from persisted.players or from puzzle)
+    const playerValues = persisted && persisted.playerValues
+        ? persisted.playerValues
+        : Array.from({ length: 6 }, () => Array(6).fill(0));
+
+    cellData.forEach(cd => {
+        const { row, col, given, el } = cd;
+        if (given) {
+            el.textContent = puzzle[row][col];
+            el.classList.add('given');
+        } else {
+            const v = playerValues[row][col];
+            if (v) el.textContent = v;
+        }
+    });
+
+    // NEW: after initial values are placed (either resumed or new game),
+    // compute invalid cells immediately so they are visible on load/reset.
+    recomputeRuleBreaks();
+
+    const overlay   = document.getElementById('radial-overlay');
+    const numEls    = document.querySelectorAll('.radial-num');
+
+    const ANGLES_DEG = { 1:60, 2:0, 3:300, 4:240, 5:180, 6:120 };
+
+    // NEW: timer + reset state
+    const timerEl = document.getElementById('timer');
+    const resetBtn = document.getElementById('reset-btn');
+
+    let startTime = persisted && typeof persisted.startTime === 'number'
+        ? persisted.startTime
+        : Date.now();
+
+    let finished = !!(persisted && persisted.finished);
+    let solvedElapsed = persisted && typeof persisted.solvedElapsed === 'number'
+        ? persisted.solvedElapsed
+        : null;
+    let timerInterval = null;
+
+    function formatTime(ms) {
+        const totalSec = Math.floor(ms / 1000);
+        const min = Math.floor(totalSec / 60);
+        const sec = totalSec % 60;
+        const mm = String(min).padStart(2, '0');
+        const ss = String(sec).padStart(2, '0');
+        return `${mm}:${ss}`;
+    }
+
+    function startTimer() {
+        if (timerInterval) clearInterval(timerInterval);
+        // if already finished, just show frozen time
+        if (finished && solvedElapsed !== null) {
+            timerEl.textContent = formatTime(solvedElapsed);
+            timerEl.classList.add('solved');
+            return;
+        }
+        timerEl.classList.remove('solved');
+        timerInterval = setInterval(() => {
+            timerEl.textContent = formatTime(Date.now() - startTime);
+        }, 1000);
+        timerEl.textContent = formatTime(Date.now() - startTime);
+    }
+
+    // start/resume counting immediately (we never reset on refresh)
+    startTimer();
+
+    // lock all cells into solved style (called on solve)
+    function lockAllCells() {
+        cellData.forEach(cd => {
+            cd.el.classList.remove('invalid', 'wrong', 'preview', 'given');
+            cd.el.classList.add('solved');
+            cd.el.style.cursor = 'default';
+        });
+    }
+
+    // if resuming a finished game, lock immediately
+    if (finished) {
+        lockAllCells();
+    }
+
+    function getRadius() {
+        const vmin = Math.min(window.innerWidth, window.innerHeight) / 100;
+        return Math.min(81, 13.5 * vmin);
+    }
+
+    let RADIUS = getRadius();
+    let originX = 0, originY = 0;
+    let hoveredValue = null, didHover = false, activeCell = null;
+    let originalValue = '';
+
+    window.addEventListener('resize', () => { RADIUS = getRadius(); });
+
+    function toRad(deg) { return (deg * Math.PI) / 180; }
+
+    function positionElements(cx, cy) {
+        // only position numbers now
+        numEls.forEach(el => {
+            const val = parseInt(el.dataset.value, 10);
+            const rad = toRad(ANGLES_DEG[val]);
+            el.style.left = (cx + RADIUS * Math.cos(rad)) + 'px';
+            el.style.top  = (cy - RADIUS * Math.sin(rad)) + 'px';
+        });
+    }
+
+    function getClosestNum(mx, my) {
+        const dx = mx - originX, dy = -(my - originY);
+        const dist = Math.hypot(dx, dy);
+        if (dist < RADIUS * 0.3) return null;
+        let angleDeg = (Math.atan2(dy, dx) * 180) / Math.PI;
+        if (angleDeg < 0) angleDeg += 360;
+        let closest = null, minDiff = Infinity;
+        numEls.forEach(el => {
+            const numAngle = ANGLES_DEG[parseInt(el.dataset.value, 10)];
+            let diff = Math.abs(angleDeg - numAngle);
+            if (diff > 180) diff = 360 - diff;
+            if (diff < minDiff) { minDiff = diff; closest = el; }
+        });
+        return minDiff <= 30 ? closest : null;
+    }
+
+    function checkWin() {
+        for (const cd of cellData) {
+            const val = parseInt(cd.el.textContent, 10);
+            if (!val || val !== solution[cd.row][cd.col]) return false;
+        }
+        return true;
+    }
+
+    function recomputeRuleBreaks() {
+        // clear previous invalid flags on non-empty cells
+        cellData.forEach(cd => {
+            cd.el.classList.remove('invalid');
+        });
+
+        // build a 6x6 view of ALL current values (given + manual)
+        const current = Array.from({ length: 6 }, () => Array(6).fill(0));
+        cellData.forEach(cd => {
+            const v = parseInt(cd.el.textContent, 10);
+            if (v) current[cd.row][cd.col] = v;
+        });
+
+        // helper to mark a cell if a conflict is found
+        function markConflict(r, c) {
+            const cd = cellData[r * 6 + c];
+            // given cells can stay blue or also show invalid; spec only requires
+            // chosen (manual) numbers to be pink-red, but we also want them red
+            // when they break with a pre-filled one, so:
+            if (!cd.given) {
+                cd.el.classList.add('invalid');
+            } else {
+                // optionally also highlight given side of conflict if you want:
+                // cd.el.classList.add('invalid');
+            }
+        }
+
+        // rows
+        for (let r = 0; r < 6; r++) {
+            for (let c1 = 0; c1 < 6; c1++) {
+                const v = current[r][c1];
+                if (!v) continue;
+                for (let c2 = c1 + 1; c2 < 6; c2++) {
+                    if (current[r][c2] === v) {
+                        markConflict(r, c1);
+                        markConflict(r, c2);
+                    }
+                }
+            }
+        }
+        // columns
+        for (let c = 0; c < 6; c++) {
+            for (let r1 = 0; r1 < 6; r1++) {
+                const v = current[r1][c];
+                if (!v) continue;
+                for (let r2 = r1 + 1; r2 < 6; r2++) {
+                    if (current[r2][c] === v) {
+                        markConflict(r1, c);
+                        markConflict(r2, c);
+                    }
+                }
+            }
+        }
+        // 2x3 boxes
+        for (let br = 0; br < 6; br += 2) {
+            for (let bc = 0; bc < 6; bc += 3) {
+                const cells = [];
+                for (let r = br; r < br + 2; r++) {
+                    for (let c = bc; c < bc + 3; c++) {
+                        if (current[r][c]) cells.push({ r, c, v: current[r][c] });
+                    }
+                }
+                for (let i = 0; i < cells.length; i++) {
+                    for (let j = i + 1; j < cells.length; j++) {
+                        if (cells[i].v === cells[j].v) {
+                            markConflict(cells[i].r, cells[i].c);
+                            markConflict(cells[j].r, cells[j].c);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // persist full game state snapshot
+    function persistCurrentState() {
+        const currentValues = Array.from({ length: 6 }, () => Array(6).fill(0));
+        cellData.forEach(cd => {
+            const v = parseInt(cd.el.textContent, 10);
+            if (!cd.given && v) currentValues[cd.row][cd.col] = v;
+        });
+
+        saveState({
+            solution,
+            puzzle,
+            playerValues: currentValues,
+            startTime,
+            finished,
+            solvedElapsed
+        });
+    }
+
+    function openRadial(cell, cx, cy) {
+        activeCell = cell;
+        originalValue = cell.textContent || '';
+        originX = cx; originY = cy;
+        positionElements(originX, originY);
+        numEls.forEach(n => n.classList.remove('hovered'));
+        hoveredValue = null; didHover = false;
+        overlay.style.display = 'block';
+    }
+
+    function closeRadial() {
+        overlay.style.display = 'none';
+        if (activeCell) {
+            activeCell.classList.remove('preview');
+            if (hoveredValue !== null) {
+                activeCell.textContent = hoveredValue;
+                activeCell.classList.remove('wrong');
+            } else if (!didHover) {
+                activeCell.textContent = '';
+                activeCell.classList.remove('wrong');
+            } else {
+                // hovered at least once but no selection: restore original
+                activeCell.textContent = originalValue;
+            }
+        }
+        hoveredValue = null; didHover = false; activeCell = null;
+        recomputeRuleBreaks();
+
+        if (!finished && checkWin()) {
+            finished = true;
+            solvedElapsed = Date.now() - startTime;
+            if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+            timerEl.textContent = formatTime(solvedElapsed);
+            timerEl.classList.add('solved');
+            lockAllCells();
+        }
+
+        persistCurrentState();
+    }
+
+    function handleMove(mx, my) {
+        const closest = getClosestNum(mx, my);
+        numEls.forEach(n => n.classList.remove('hovered'));
+        if (closest) {
+            closest.classList.add('hovered');
+            hoveredValue = parseInt(closest.dataset.value, 10);
+            didHover = true;
+            if (activeCell) {
+                activeCell.textContent = hoveredValue;
+                activeCell.classList.add('preview');
+            }
+        } else {
+            hoveredValue = null;
+            if (activeCell) {
+                activeCell.textContent = originalValue;
+                activeCell.classList.remove('preview');
+            }
+        }
+    }
+
+    // ── Mouse events ───────────────────────────────────────────────────────
+    cellData.forEach(cd => {
+        if (cd.given) return;
+        cd.el.addEventListener('mousedown', e => {
+            e.preventDefault();
+            if (finished) return;
+            const rect = cd.el.getBoundingClientRect();
+            openRadial(cd.el, rect.left + rect.width / 2, rect.top + rect.height / 2);
+        });
+    });
+
+    overlay.addEventListener('mousemove', e => handleMove(e.clientX, e.clientY));
+    overlay.addEventListener('mouseup', () => closeRadial());
+
+    // ── Touch events ───────────────────────────────────────────────────────
+    cellData.forEach(cd => {
+        if (cd.given) return;
+        cd.el.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            if (finished) return;
+            const rect = cd.el.getBoundingClientRect();
+            openRadial(cd.el, rect.left + rect.width / 2, rect.top + rect.height / 2);
+            overlay.offsetHeight;
+
+            function onTouchMove(ev) {
+                ev.preventDefault();
+                handleMove(ev.touches[0].clientX, ev.touches[0].clientY);
+            }
+            function onTouchEnd(ev) {
+                ev.preventDefault();
+                const touch = ev.changedTouches[0];
+                const closest = getClosestNum(touch.clientX, touch.clientY);
+                if (closest) { hoveredValue = parseInt(closest.dataset.value, 10); didHover = true; }
+                closeRadial();
+                document.removeEventListener('touchmove', onTouchMove);
+                document.removeEventListener('touchend', onTouchEnd);
+            }
+            document.addEventListener('touchmove', onTouchMove, { passive: false });
+            document.addEventListener('touchend', onTouchEnd, { passive: false });
+        }, { passive: false });
+    });
+
+    // ── Reset button: start brand new game ─────────────────────────────────
+    resetBtn.addEventListener('click', () => {
+        clearState();
+        location.reload();
+    });
+
+    // ── Easter egg: press S to fill all cells except one ───────────────────
+    document.addEventListener('keydown', e => {
+        if (e.key === 's' || e.key === 'S') {
+            if (finished) return;
+            const emptyCells = cellData.filter(cd => !cd.given && parseInt(cd.el.textContent, 10) !== solution[cd.row][cd.col]);
+            if (emptyCells.length === 0) return;
+            // pick one random cell to leave empty
+            const skip = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+            cellData.forEach(cd => {
+                if (cd.given) return;
+                if (cd === skip) {
+                    cd.el.textContent = '';
+                    cd.el.classList.remove('invalid', 'wrong', 'preview');
+                } else {
+                    cd.el.textContent = solution[cd.row][cd.col];
+                    cd.el.classList.remove('invalid', 'wrong', 'preview');
+                }
+            });
+            recomputeRuleBreaks();
+            persistCurrentState();
+        }
+    });
+</script>
 </body>
 </html>
+
