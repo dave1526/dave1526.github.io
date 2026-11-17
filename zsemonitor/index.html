@@ -134,7 +134,8 @@ function recalc(p){
 }
 function complete(p){
   const g=geom(p);
-  return g&&isFinite(num(p.ev))&&isFinite(num(p.an))&&isFinite(num(p.mo))?Object.assign({E:num(p.ev)},g):null;
+  if(g&&p.anchor)recalc(p); /* derive missing/stale fields once the base fields are valid */
+  return g&&isFinite(num(p.ev))&&(isFinite(num(p.an))||g.S0===0)&&isFinite(num(p.mo))?Object.assign({E:num(p.ev)},g):null;
 }
 function onField(i,key,val){
   const p=S[i];p[key]=val;
