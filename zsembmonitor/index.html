@@ -30,29 +30,32 @@
   body {
     margin: 0;
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 16px;
+    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    -webkit-text-size-adjust: 100%;
     background: var(--bg);
     color: var(--text);
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
   main {
     width: 100%;
-    max-width: 380px;
+    max-width: 420px;
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 16px;
-    padding: 32px 24px;
+    padding: clamp(24px, 6vw, 40px) clamp(16px, 5vw, 32px);
     text-align: center;
     box-shadow: 0 6px 24px rgba(0, 0, 0, .08);
   }
-  .logo { width: 96px; height: 96px; }
-  h1 { margin: 12px 0 24px; font-size: 1.8rem; letter-spacing: -.01em; }
+  .logo { width: clamp(80px, 28vw, 120px); height: clamp(80px, 28vw, 120px); margin: 0 auto; }
+  .logo svg { display: block; width: 100%; height: 100%; }
+  h1 { margin: 12px 0 24px; font-size: clamp(1.5rem, 7vw, 2rem); letter-spacing: -.01em; overflow-wrap: anywhere; }
   form { display: flex; flex-direction: column; align-items: center; gap: 20px; }
-  label { display: inline-flex; align-items: center; gap: 10px; font-size: 1.05rem; cursor: pointer; }
-  input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--accent-dark); cursor: pointer; }
+  label { display: inline-flex; align-items: center; gap: 12px; min-height: 44px; font-size: 1.05rem; cursor: pointer; }
+  input[type=checkbox] { width: 24px; height: 24px; flex: none; accent-color: var(--accent-dark); cursor: pointer; }
   button {
     font: inherit;
     font-weight: 600;
@@ -60,12 +63,16 @@
     background: var(--accent-dark);
     border: 0;
     border-radius: 10px;
+    width: 100%;
+    min-height: 48px;
+    font-size: 1.05rem;
     padding: 12px 32px;
     cursor: pointer;
+    touch-action: manipulation;
   }
   button:hover { filter: brightness(1.1); }
   button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-  .result { margin: 0; font-size: 1.2rem; font-weight: 600; color: var(--ok); }
+  .result { margin: 0; font-size: clamp(1.05rem, 5vw, 1.3rem); overflow-wrap: anywhere; font-weight: 600; color: var(--ok); }
 </style>
 </head>
 <body>
