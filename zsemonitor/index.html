@@ -34,14 +34,23 @@ main{display:grid;grid-template-columns:1fr;gap:16px;padding:16px 24px 28px}
 .title input{text-align:center;width:200px;max-width:100%}
 .body{flex:1;display:grid;grid-template-columns:1fr 2fr 1fr;gap:8px;margin-top:10px;min-height:240px}
 .col{display:flex;flex-direction:column;gap:12px;font-size:13px;min-width:0}
+.col .rad{padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:rgba(127,127,160,.06);transition:background .15s,border-color .15s}
+.col .rad.sel{border-color:var(--accent);background:rgba(79,109,245,.12)}
+.col .rad.sel label{color:var(--accent)}
 .col label{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
-.col label b{color:var(--danger);font-weight:700}
+.col label b,.pickTitle b{color:var(--danger);font-weight:700}
+.col label b.ok,.pickTitle b.ok{color:#2fa84f}
+.pickTitle{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
 .val{font-weight:600;font-variant-numeric:tabular-nums;word-break:break-word;position:relative}
-.val input[type=date]{position:absolute;left:0;top:0;width:1px;height:1px;opacity:0;pointer-events:none;border:0;padding:0}
+.ed:has(>input[type=date]){position:relative;display:inline-block;min-width:60px}
+.ed>input[type=date]{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;margin:0;font-size:16px;cursor:pointer;-webkit-appearance:none;appearance:none;background:transparent}
+.ed>input[type=date]::-webkit-calendar-picker-indicator{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;cursor:pointer}
 .chart{position:relative;min-width:0;min-height:220px}
+.bad .dt{color:var(--danger)}
+.err{width:fit-content;max-width:100%;box-sizing:border-box;text-align:center;margin:0 auto 10px;padding:8px 12px;border-radius:8px;background:rgba(229,72,77,.12);color:var(--danger);font-weight:600;font-size:13px}
 .chart svg{position:absolute;inset:0;width:100%;height:100%;color:var(--c)}
 .info{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
-.info[hidden]{display:none}
+.info[hidden],.err[hidden]{display:none}
 .info .it{display:flex;flex-direction:column}
 .info .it small{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
 .info .it span{font-variant-numeric:tabular-nums;font-weight:600}
@@ -137,6 +146,11 @@ function complete(p){
   if(g&&p.anchor)recalc(p); /* derive missing/stale fields once the base fields are valid */
   return g&&isFinite(num(p.ev))&&(isFinite(num(p.an))||g.S0===0)&&isFinite(num(p.mo))?Object.assign({E:num(p.ev)},g):null;
 }
+function dateOk(p,key){
+  const d=pdate(p[key]);if(!d)return false;
+  const o=pdate(p[key==='sd'?'ed':'sd']);if(!o)return true;
+  return p.sd&&p.ed?pdate(p.ed)>pdate(p.sd):true;
+}
 function onField(i,key,val){
   const p=S[i];p[key]=val;
   if(key==='ev'||key==='an'||key==='mo'){
@@ -180,13 +194,13 @@ function editable(o){
   return {el:wrap,refresh(){if(!input)show();}};
 }
 function dateField(i,key){
-  const wrap=$('span','ed'),txt=$('span'),inp=$('input');inp.type='date';inp.tabIndex=-1;
+  const wrap=$('span','ed dt'),txt=$('span'),inp=$('input');inp.type='date';
   wrap.append(txt,inp);
-  const show=()=>{const d=fdate(S[i][key]);txt.textContent=d||'—';txt.className=d?'':'empty';};
-  wrap.addEventListener('click',()=>{
-    inp.value=S[i][key];
-    try{inp.showPicker();}catch(e){inp.focus();inp.click();}
-  });
+  const show=()=>{inp.value=S[i][key]||'';const d=fdate(S[i][key]);txt.textContent=d||'—';txt.className=d?'':'empty';};
+  // the transparent input covers the label, so a real tap opens the native picker (iOS Safari/Chrome need this);
+  // showPicker() is only a bonus for desktop browsers.
+  inp.addEventListener('pointerdown',()=>{inp.value=S[i][key]||'';});
+  inp.addEventListener('click',()=>{try{if(inp.showPicker)inp.showPicker();}catch(e){}});
   inp.addEventListener('input',()=>onField(i,key,inp.value));
   inp.addEventListener('change',()=>onField(i,key,inp.value));
   show();
@@ -222,24 +236,32 @@ function build(i){
   const t=$('div','title');t.append(title.el);fields.push(title);
   const col=(rows)=>{
     const c=$('div','col');
-    rows.forEach(([label,f])=>{
-      const d=$('div'),l=$('label',null,label+' ');l.append($('b',null,'*'));
+    rows.forEach(([label,f,key,ok])=>{
+      const d=$('div'),l=$('label',null,label+' ');
+      if(key){
+        const sync=()=>d.classList.toggle('sel',S[i].anchor===key);sync();
+        fields.push({refresh:sync});d.classList.add('rad');
+      }else{const b=$('b',null,'*');l.append(b);const sy=()=>b.classList.toggle('ok',!!ok());sy();fields.push({refresh:sy});}
       const v=$('div','val');v.append(f.el);fields.push(f);
       d.append(l,v);c.append(d);
     });return c;
   };
-  const left=col([['Kezdődátum',dateField(i,'sd')],['Kezdőérték',numField(i,'sv',false)]]);
-  const right=col([['Végdátum',dateField(i,'ed')],['Végérték',numField(i,'ev',false)],
-    ['Éves %',numField(i,'an',true,' %')],['Havi Δ',numField(i,'mo',true)]]);
+  const left=col([['Kezdődátum',dateField(i,'sd'),null,()=>dateOk(S[i],'sd')],['Kezdőérték',numField(i,'sv',false),null,()=>isFinite(num(S[i].sv))]]);
+  const right=col([['Végdátum',dateField(i,'ed'),null,()=>dateOk(S[i],'ed')],['Végérték',numField(i,'ev',false),'ev'],
+    ['Éves %',numField(i,'an',true,' %'),'an'],['Havi Δ',numField(i,'mo',true),'mo']]);
+  const pt=$('div','pickTitle',' Add meg az egyiket: '),pb=$('b',null,'*');pt.prepend('');pt.append(pb);
+  const psy=()=>pb.classList.toggle('ok',!!S[i].anchor);psy();fields.push({refresh:psy});
+  right.insertBefore(pt,right.children[1]);
   const chart=$('div','chart');
   const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');chart.append(svg);
+  const err=$('div','err','A végdátum csak a kezdődátum után lehet.');err.hidden=true;
   const body=$('div','body');body.append(left,chart,right);
   const info=$('div','info');
   const mk=(l,c)=>{const d=$('div','it '+(c||'')),s=$('span');d.append($('small',null,l),s);info.append(d);return s;};
   const elapsed=mk('Eltelt napok'),leftD=mk('Fennmaradó napok'),cur=mk('Aktuális érték','cur');
   const light=$('div','light');info.append(light);
-  el.append(x,t,body,info);
-  Object.assign(refs[i],{fields,svg,chart,info,elapsed,leftD,cur,light});
+  el.append(x,t,err,body,info);
+  Object.assign(refs[i],{fields,svg,err,chart,info,elapsed,leftD,cur,light});
   refs[i].ro=new ResizeObserver(()=>draw(i));refs[i].ro.observe(chart);
   update(i);
 }
@@ -262,6 +284,8 @@ function curValue(c,st,now){
 function update(i){
   const p=S[i],r=refs[i];if(!p.active)return;
   const c=complete(p);
+  const sd0=pdate(p.sd),ed0=pdate(p.ed),bad=!!(sd0&&ed0&&ed0<=sd0);
+  r.el.classList.toggle('bad',bad);r.err.hidden=!bad;
   r.el.classList.remove('st-amber','st-grey','st-green');
   if(!c){r.info.hidden=true;r.svg.innerHTML='';return;}
   const now=Date.now(),st=status(c,now),t=today(),total=Math.round((c.ed-c.sd)/DAY);
