@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Zsémonitor</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <style>
 :root{
   --bg:#f3f5f9; --card:#fff; --text:#1c2230; --muted:#7a8397; --line:#e4e8f0; --accent:#4f6df5; --danger:#e5484d;
@@ -17,6 +18,7 @@ body{margin:0;background:var(--bg);color:var(--text);font:15px/1.4 system-ui,-ap
 header{position:sticky;top:0;z-index:10;background:var(--bg);height:48px;display:flex;align-items:center;padding:0 24px;font-size:22px;font-weight:700;letter-spacing:.3px;transition:font-size .2s,box-shadow .2s}
 header.small{font-size:15px;box-shadow:0 1px 0 var(--line),0 4px 12px rgba(20,30,60,.08)}
 header span{color:var(--accent)}
+header img{height:1.5em;width:1.5em;margin-right:10px;transition:height .2s,width .2s}
 main{display:grid;grid-template-columns:1fr;gap:14px;padding:8px 16px 24px}
 @media (min-width:1100px){main{grid-template-columns:repeat(3,1fr)}}
 .panel{position:relative;container-type:inline-size;background:var(--card);border-radius:16px;box-shadow:var(--shadow);min-height:320px;display:flex;flex-direction:column;padding:10px 12px 12px;--c:var(--grey)}
@@ -30,7 +32,11 @@ main{display:grid;grid-template-columns:1fr;gap:14px;padding:8px 16px 24px}
 .title{text-align:center;font-size:15px;font-weight:600;padding:0 32px;min-height:24px}
 .ed{display:inline-block;cursor:text;border-radius:6px;padding:1px 4px;margin:-1px -4px;max-width:100%}
 .ed:hover{background:rgba(127,127,160,.12)}
+.col .rad:hover{background:rgba(127,127,160,.12)}
+.col .rad .ed:hover{background:none}
 .ed .empty{color:var(--muted)}
+.col .rad .ed input{margin:0;padding:0;outline:none}
+.col .rad:focus-within{border-color:var(--accent)}
 .ed input{font:inherit;color:inherit;text-align:inherit;background:transparent;border:none;outline:2px solid var(--accent);border-radius:6px;padding:0 4px;margin:-1px -4px;width:100%;min-width:60px}
 .title .ed{display:inline-block;max-width:100%}
 .title input{text-align:center;width:200px;max-width:100%}
@@ -43,8 +49,13 @@ main{display:grid;grid-template-columns:1fr;gap:14px;padding:8px 16px 24px}
 .col label b,.pickTitle b{color:var(--danger);font-weight:700}
 .col label b.ok,.pickTitle b.ok{color:#2fa84f}
 .pickTitle{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
-.val{font-weight:600;font-variant-numeric:tabular-nums;word-break:break-word;position:relative}
-.ed:has(>input[type=date]){position:relative;display:inline-block;min-width:60px}
+.val{font-weight:600;font-variant-numeric:tabular-nums;word-break:break-word}
+.col .rad{cursor:text;position:relative}
+.col .rad.dtbox{cursor:pointer}
+.col .rad .ed,.col .rad .val{display:block;margin:0;padding:0}
+.ed:has(>input[type=date]){display:block;min-height:1.4em}
+.title .ed{display:inline-block;padding:3px 12px;margin:0;border:1px solid var(--line);border-radius:8px;background:rgba(127,127,160,.06)}
+.title .ed:hover{background:rgba(127,127,160,.12)}
 .ed>input[type=date]{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;margin:0;font-size:16px;cursor:pointer;-webkit-appearance:none;appearance:none;background:transparent}
 .ed>input[type=date]::-webkit-calendar-picker-indicator{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;cursor:pointer}
 .chart{position:relative;min-width:0;min-height:160px}
@@ -68,7 +79,7 @@ main{display:grid;grid-template-columns:1fr;gap:14px;padding:8px 16px 24px}
 </style>
 </head>
 <body>
-<header>Zsé<span>monitor</span></header>
+<header><img src="favicon.svg" alt="" width="32" height="32"><div>Zsé<span>monitor</span></div></header>
 <main id="grid"></main>
 <script>
 (function(){
@@ -172,7 +183,8 @@ function editable(o){
     if(inp.parentNode===wrap)wrap.replaceChild(txt,inp);
     if(o.commit)o.commit();show();
   }
-  txt.addEventListener('click',()=>{
+  function open(){
+    if(input)return;
     input=$('input');input.type='text';input.value=o.edit();
     if(o.max)input.maxLength=o.max;
     if(o.num){input.inputMode='decimal';input.autocomplete='off';}
@@ -191,9 +203,10 @@ function editable(o){
     });
     input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();input.blur();}});
     input.addEventListener('blur',stop);
-  });
+  }
+  wrap.addEventListener('click',open);
   show();
-  return {el:wrap,refresh(){if(!input)show();}};
+  return {el:wrap,open,refresh(){if(!input)show();}};
 }
 function dateField(i,key){
   const wrap=$('span','ed dt'),txt=$('span'),inp=$('input');inp.type='date';
@@ -206,7 +219,7 @@ function dateField(i,key){
   inp.addEventListener('input',()=>onField(i,key,inp.value));
   inp.addEventListener('change',()=>onField(i,key,inp.value));
   show();
-  return {el:wrap,refresh:show};
+  return {el:wrap,date:true,refresh:show};
 }
 function numField(i,key,neg,suffix){
   const f=editable({
@@ -251,9 +264,11 @@ function build(i){
       if(key){
         const sync=()=>d.classList.toggle('sel',S[i].anchor===key);sync();
         fields.push({refresh:sync});d.classList.add('rad');
-      }else{const b=$('b',null,'*');l.append(b);const sy=()=>b.classList.toggle('ok',!!ok());sy();fields.push({refresh:sy});}
+      }else{d.classList.add('rad');const b=$('b',null,'*');l.append(b);const sy=()=>b.classList.toggle('ok',!!ok());sy();fields.push({refresh:sy});}
       const v=$('div','val');v.append(f.el);fields.push(f);
       d.append(l,v);c.append(d);
+      if(f.open)d.addEventListener('click',e=>{if(e.target.tagName!=='INPUT')f.open();});
+      if(f.date)d.classList.add('dtbox');
     });return c;
   };
   const left=col([['Kezdődátum',dateField(i,'sd'),null,()=>dateOk(S[i],'sd')],['Kezdőérték',numField(i,'sv',false),null,()=>isFinite(num(S[i].sv))]]);
