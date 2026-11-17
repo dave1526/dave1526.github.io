@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zsémonitor</title>
+<style>
+:root{
+  --bg:#f3f5f9; --card:#fff; --text:#1c2230; --muted:#7a8397; --line:#e4e8f0; --accent:#4f6df5; --danger:#e5484d;
+  --amber:#f59e0b; --grey:#9aa3b2; --green:#16a34a; --shadow:0 1px 2px rgba(20,30,60,.06),0 8px 24px rgba(20,30,60,.06);
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#10131a;--card:#181c26;--text:#e8ebf3;--muted:#8b94a8;--line:#2a3040;--shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);--green:#22c55e}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{padding:18px 24px 6px;font-size:22px;font-weight:700;letter-spacing:.3px}
+header span{color:var(--accent)}
+main{display:grid;grid-template-columns:1fr;gap:16px;padding:16px 24px 28px}
+@media (min-width:1100px){main{grid-template-columns:repeat(3,1fr)}}
+.panel{position:relative;container-type:inline-size;background:var(--card);border-radius:16px;box-shadow:var(--shadow);min-height:400px;display:flex;flex-direction:column;padding:12px 14px 14px;--c:var(--grey)}
+.panel.st-amber{--c:var(--amber)} .panel.st-grey{--c:var(--grey)} .panel.st-green{--c:var(--green)}
+.panel.empty{background:transparent;border:2px dashed var(--line);box-shadow:none;align-items:center;justify-content:center}
+.add{width:64px;height:64px;border-radius:50%;border:none;background:var(--accent);color:#fff;font-size:36px;line-height:1;cursor:pointer;box-shadow:var(--shadow);transition:transform .15s}
+.add:hover{transform:scale(1.08)}
+.x{position:absolute;top:8px;right:10px;width:28px;height:28px;border:none;border-radius:8px;background:transparent;color:var(--muted);font-size:20px;cursor:pointer}
+.x:hover{background:var(--danger);color:#fff}
+.title{text-align:center;font-size:17px;font-weight:600;padding:0 32px;min-height:28px}
+.ed{display:inline-block;cursor:text;border-radius:6px;padding:1px 4px;margin:-1px -4px;max-width:100%}
+.ed:hover{background:rgba(127,127,160,.12)}
+.ed .empty{color:var(--muted)}
+.ed input{font:inherit;color:inherit;text-align:inherit;background:transparent;border:none;outline:2px solid var(--accent);border-radius:6px;padding:0 4px;margin:-1px -4px;width:100%;min-width:60px}
+.title .ed{display:inline-block;max-width:100%}
+.title input{text-align:center;width:200px;max-width:100%}
+.body{flex:1;display:grid;grid-template-columns:1fr 2fr 1fr;gap:8px;margin-top:10px;min-height:240px}
+.col{display:flex;flex-direction:column;gap:12px;font-size:13px;min-width:0}
+.col label{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+.col label b{color:var(--danger);font-weight:700}
+.val{font-weight:600;font-variant-numeric:tabular-nums;word-break:break-word;position:relative}
+.val input[type=date]{position:absolute;left:0;top:0;width:1px;height:1px;opacity:0;pointer-events:none;border:0;padding:0}
+.chart{position:relative;min-width:0;min-height:220px}
+.chart svg{position:absolute;inset:0;width:100%;height:100%;color:var(--c)}
+.info{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.info[hidden]{display:none}
+.info .it{display:flex;flex-direction:column}
+.info .it small{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+.info .it span{font-variant-numeric:tabular-nums;font-weight:600}
+.info .cur span{font-size:24px;font-weight:800;color:var(--c)}
+.light{width:20px;height:20px;border-radius:50%;background:var(--c);box-shadow:0 0 10px var(--c)}
+.st-amber .light{animation:blink 2s steps(1) infinite}
+.st-grey .light{box-shadow:none}
+@keyframes blink{0%,49.99%{opacity:1}50%,100%{opacity:.15}}
+@container (max-width:420px){
+  .body{grid-template-columns:1fr 1fr}
+  .chart{grid-column:1/-1;grid-row:2;min-height:240px}
+}
+</style>
+</head>
+<body>
+<header>Zsé<span>monitor</span></header>
+<main id="grid"></main>
+<script>
+(function(){
+'use strict';
+const N=6, DAY=864e5, YEAR=365.25*DAY;
+const $=(t,c,x)=>{const e=document.createElement(t); if(c)e.className=c; if(x!=null)e.textContent=x; return e};
+
+/* ---------- state & storage ---------- */
+const blank=i=>({active:false,title:'Monitor '+(i+1),sd:'',sv:'',ed:'',ev:'',an:'',mo:'',anchor:null});
+const S=[],refs=[];
+function save(i){
+  const p=S[i],k='zsm'+i;
+  try{
+    if(p.active){const v=encodeURIComponent(JSON.stringify(p));
+      document.cookie=k+'='+v+';max-age=315360000;path=/;SameSite=Lax';
+      try{localStorage.setItem(k,JSON.stringify(p))}catch(e){}
+    }else{document.cookie=k+'=;max-age=0;path=/';try{localStorage.removeItem(k)}catch(e){}}
+  }catch(e){}
+}
+function load(i){
+  let raw=null;
+  try{const m=document.cookie.split('; ').find(c=>c.startsWith('zsm'+i+'='));
+    if(m)raw=decodeURIComponent(m.slice(m.indexOf('=')+1));}catch(e){}
+  if(!raw){try{raw=localStorage.getItem('zsm'+i)}catch(e){}}
+  const p=blank(i);
+  if(raw){try{const o=JSON.parse(raw);if(o&&o.active)Object.keys(p).forEach(k=>{if(o[k]!==undefined)p[k]=o[k]});}catch(e){}}
+  return p;
+}
+
+/* ---------- number helpers ---------- */
+function sanitize(str,neg){
+  let s=String(str).replace(/\./g,',');
+  const minus=neg&&/^\s*-/.test(s);
+  s=s.replace(/[^0-9,]/g,'');
+  const idx=s.indexOf(','),has=idx>=0;
+  if(has)s=s.slice(0,idx+1)+s.slice(idx+1).replace(/,/g,'');
+  let [ip,dp]=s.split(',');
+  ip=ip.replace(/^0+(?=\d)/,'').slice(0,12);
+  if(has){if(ip==='')ip='0';dp=dp.slice(0,2);}
+  return (minus?'-':'')+ip+(has?','+dp:'');
+}
+function group(c){
+  const m=/^(-?)(\d*)(,\d*)?$/.exec(c);if(!m)return c;
+  return m[1]+m[2].replace(/\B(?=(\d{3})+(?!\d))/g,' ')+(m[3]||'');
+}
+function pad(c){
+  if(!c||c==='-')return '';
+  let [ip,dp]=c.split(',');dp=((dp||'')+'00').slice(0,2);
+  return group(ip+','+dp);
+}
+const num=c=>(c&&c!=='-')?parseFloat(c.replace(',','.')):NaN;
+const canon=x=>{if(!isFinite(x))return '';let s=x.toFixed(2);if(/^-0\.00$/.test(s))s='0.00';return s.replace('.',',');};
+
+/* ---------- date helpers ---------- */
+function pdate(s){const m=/^(\d{4})-(\d\d)-(\d\d)$/.exec(s||'');if(!m)return null;const d=new Date(+m[1],m[2]-1,+m[3]);return isNaN(d)?null:d;}
+const fdate=s=>pdate(s)?s.replace(/-/g,'. ')+'.':'';
+const today=()=>{const d=new Date();d.setHours(0,0,0,0);return d;};
+
+/* ---------- calculations ---------- */
+function geom(p){
+  const S0=num(p.sv),sd=pdate(p.sd),ed=pdate(p.ed);
+  if(!isFinite(S0)||!sd||!ed||ed<=sd)return null;
+  const yrs=(ed-sd)/YEAR;return {S0,sd,ed,yrs,mos:yrs*12};
+}
+function recalc(p){
+  if(!p.anchor){p.ev=p.an=p.mo='';return;}
+  const g=geom(p);if(!g)return;
+  let E;
+  if(p.anchor==='ev')E=num(p.ev);
+  else if(p.anchor==='an'){E=g.S0*(1+num(p.an)/100*g.yrs);p.ev=canon(E);E=num(p.ev);}
+  else{E=g.S0+num(p.mo)*g.mos;p.ev=canon(E);E=num(p.ev);}
+  if(p.anchor!=='an')p.an=g.S0!==0?canon((E-g.S0)/g.S0/g.yrs*100):'';
+  if(p.anchor!=='mo')p.mo=canon((E-g.S0)/g.mos);
+}
+function complete(p){
+  const g=geom(p);
+  return g&&isFinite(num(p.ev))&&isFinite(num(p.an))&&isFinite(num(p.mo))?Object.assign({E:num(p.ev)},g):null;
+}
+function onField(i,key,val){
+  const p=S[i];p[key]=val;
+  if(key==='ev'||key==='an'||key==='mo'){
+    if(!isFinite(num(val))){p.ev=p.an=p.mo='';p.anchor=null;}
+    else{p.anchor=key;recalc(p);}
+  }else recalc(p);
+  save(i);refresh(i,key);
+}
+
+/* ---------- editable field ---------- */
+function editable(o){
+  const wrap=$('span','ed'),txt=$('span');wrap.append(txt);
+  let input=null;
+  const show=()=>{const d=o.display();txt.textContent=d||'—';txt.className=d?'':'empty';};
+  function stop(){
+    if(!input)return;const inp=input;input=null;
+    if(inp.parentNode===wrap)wrap.replaceChild(txt,inp);
+    if(o.commit)o.commit();show();
+  }
+  txt.addEventListener('click',()=>{
+    input=$('input');input.type='text';input.value=o.edit();
+    if(o.max)input.maxLength=o.max;
+    if(o.num){input.inputMode='decimal';input.autocomplete='off';}
+    wrap.replaceChild(input,txt);input.focus();
+    const L=input.value.length;input.setSelectionRange(L,L);
+    input.addEventListener('input',()=>{
+      const raw=input.value,caret=input.selectionStart;
+      if(o.num){
+        const c=sanitize(raw,o.neg),text=group(c);
+        const n=Math.min(sanitize(raw.slice(0,caret),o.neg).length,c.length);
+        let pos=0,seen=0;
+        while(pos<text.length&&seen<n){if(text[pos]!==' ')seen++;pos++;}
+        input.value=text;input.setSelectionRange(pos,pos);
+        o.change(c);
+      }else o.change(input.value);
+    });
+    input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();input.blur();}});
+    input.addEventListener('blur',stop);
+  });
+  show();
+  return {el:wrap,refresh(){if(!input)show();}};
+}
+function dateField(i,key){
+  const wrap=$('span','ed'),txt=$('span'),inp=$('input');inp.type='date';inp.tabIndex=-1;
+  wrap.append(txt,inp);
+  const show=()=>{const d=fdate(S[i][key]);txt.textContent=d||'—';txt.className=d?'':'empty';};
+  wrap.addEventListener('click',()=>{
+    inp.value=S[i][key];
+    try{inp.showPicker();}catch(e){inp.focus();inp.click();}
+  });
+  inp.addEventListener('input',()=>onField(i,key,inp.value));
+  inp.addEventListener('change',()=>onField(i,key,inp.value));
+  show();
+  return {el:wrap,refresh:show};
+}
+function numField(i,key,neg,suffix){
+  const f=editable({
+    num:true,neg,max:18,
+    display:()=>pad(S[i][key])?pad(S[i][key])+(suffix||''):'',
+    edit:()=>group(S[i][key]),
+    change:c=>onField(i,key,c)
+  });
+  return f;
+}
+
+/* ---------- panel build ---------- */
+function build(i){
+  const p=S[i],el=refs[i].el;
+  if(refs[i].ro){refs[i].ro.disconnect();refs[i].ro=null;}
+  el.innerHTML='';el.className='panel';
+  if(!p.active){
+    el.classList.add('empty');
+    const b=$('button','add','+');b.title='Monitor hozzáadása';
+    b.onclick=()=>{S[i]=blank(i);S[i].active=true;save(i);build(i);};
+    el.append(b);refs[i].fields=[];return;
+  }
+  const fields=[];
+  const x=$('button','x','×');x.title='Törlés';
+  x.onclick=()=>{S[i]=blank(i);save(i);build(i);};
+  const title=editable({max:30,display:()=>p.title||'Monitor '+(i+1),edit:()=>p.title,
+    change:v=>{p.title=v;save(i);},
+    commit:()=>{if(!p.title.trim()){p.title='Monitor '+(i+1);save(i);}}});
+  const t=$('div','title');t.append(title.el);fields.push(title);
+  const col=(rows)=>{
+    const c=$('div','col');
+    rows.forEach(([label,f])=>{
+      const d=$('div'),l=$('label',null,label+' ');l.append($('b',null,'*'));
+      const v=$('div','val');v.append(f.el);fields.push(f);
+      d.append(l,v);c.append(d);
+    });return c;
+  };
+  const left=col([['Kezdődátum',dateField(i,'sd')],['Kezdőérték',numField(i,'sv',false)]]);
+  const right=col([['Végdátum',dateField(i,'ed')],['Végérték',numField(i,'ev',false)],
+    ['Éves %',numField(i,'an',true,' %')],['Havi Δ',numField(i,'mo',true)]]);
+  const chart=$('div','chart');
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');chart.append(svg);
+  const body=$('div','body');body.append(left,chart,right);
+  const info=$('div','info');
+  const mk=(l,c)=>{const d=$('div','it '+(c||'')),s=$('span');d.append($('small',null,l),s);info.append(d);return s;};
+  const elapsed=mk('Eltelt napok'),leftD=mk('Fennmaradó napok'),cur=mk('Aktuális érték','cur');
+  const light=$('div','light');info.append(light);
+  el.append(x,t,body,info);
+  Object.assign(refs[i],{fields,svg,chart,info,elapsed,leftD,cur,light});
+  refs[i].ro=new ResizeObserver(()=>draw(i));refs[i].ro.observe(chart);
+  update(i);
+}
+function refresh(i,skipKey){
+  refs[i].fields.forEach(f=>f.refresh());
+  update(i);
+}
+
+/* ---------- live info & status ---------- */
+function status(c,now){
+  const t=today();
+  return t<c.sd?'grey':t>c.ed?'green':'amber';
+}
+function curValue(c,st,now){
+  if(st==='grey')return c.S0;
+  if(st==='green')return c.E;
+  const k=Math.min(1,Math.max(0,(now-c.sd)/(c.ed-c.sd)));
+  return c.S0+(c.E-c.S0)*k;
+}
+function update(i){
+  const p=S[i],r=refs[i];if(!p.active)return;
+  const c=complete(p);
+  r.el.classList.remove('st-amber','st-grey','st-green');
+  if(!c){r.info.hidden=true;r.svg.innerHTML='';return;}
+  const now=Date.now(),st=status(c,now),t=today(),total=Math.round((c.ed-c.sd)/DAY);
+  r.el.classList.add('st-'+st);r.info.hidden=false;
+  r.elapsed.textContent=st==='grey'?0:st==='green'?total:Math.round((t-c.sd)/DAY);
+  r.leftD.textContent=st==='green'?0:Math.round((c.ed-t)/DAY);
+  r.cur.textContent=pad(canon(curValue(c,st,now)));
+  draw(i,c,st,now);
+}
+
+/* ---------- chart ---------- */
+function xticks(sd,ed,maxN){
+  const span=(ed-sd)/DAY,out=[],mm=n=>String(n+1).padStart(2,'0');
+  const pick=(list,steps)=>{for(const s of steps){const l=list.filter((_,k)=>k%s===0);if(l.length<=maxN)return l;}return [list[0]];};
+  if(span>=730){
+    let y=sd.getFullYear();if(new Date(y,0,1)<sd)y++;
+    const l=[];for(;new Date(y,0,1)<=ed;y++)l.push({d:new Date(y,0,1),s:String(y)});
+    if(l.length>=2)return pick(l,[1,2,5,10,20,25,50,100,200]);
+  }
+  if(span>=50){
+    let y=sd.getFullYear(),m=sd.getMonth();if(new Date(y,m,1)<sd){m++;}
+    const l=[];for(;;m++){const d=new Date(y,m,1);if(d>ed)break;l.push({d,s:d.getFullYear()+'.'+mm(d.getMonth())});}
+    if(l.length)return pick(l,[1,2,3,6,12,24,60]);
+  }
+  const l=[];for(let d=new Date(sd);d<=ed;d=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1))l.push({d:new Date(d),s:mm(d.getMonth())+'.'+String(d.getDate()).padStart(2,'0')});
+  return pick(l,[1,2,5,7,10,14,30,60]);
+}
+function draw(i,c,st,now){
+  const p=S[i],r=refs[i];if(!p.active||!r.chart)return;
+  c=c||complete(p);if(!c){r.svg.innerHTML='';return;}
+  st=st||status(c);now=now||Date.now();
+  const W=r.chart.clientWidth,H=r.chart.clientHeight;if(W<80||H<80)return;
+  let lo=Math.min(c.S0,c.E),hi=Math.max(c.S0,c.E);if(lo===hi){lo-=1;hi+=1;}
+  const range=hi-lo,dec=range<5?2:range<50?1:0;
+  const yt=[0,1,2,3,4].map(k=>lo+range*k/4);
+  const fmtY=v=>group(v.toFixed(dec).replace('.',','));
+  const ml=Math.max(...yt.map(v=>fmtY(v).length))*6.4+16,mr=20,mt=12,mb=26;
+  const pw=W-ml-mr,ph=H-mt-mb;if(pw<30||ph<30)return;
+  const X=t=>ml+(t-c.sd)/(c.ed-c.sd)*pw,Y=v=>mt+ph-(v-lo)/range*ph;
+  const f=n=>n.toFixed(1),tx='fill="var(--muted)" font-size="11"';
+  let s='';
+  yt.forEach(v=>{s+=`<line x1="${ml}" x2="${ml+pw}" y1="${f(Y(v))}" y2="${f(Y(v))}" stroke="var(--line)"/>`+
+    `<text x="${ml-6}" y="${f(Y(v)+4)}" text-anchor="end" ${tx}>${fmtY(v)}</text>`;});
+  xticks(c.sd,c.ed,Math.max(2,Math.floor(pw/60))).forEach(t=>{const x=X(t.d);
+    s+=`<line x1="${f(x)}" x2="${f(x)}" y1="${mt+ph}" y2="${mt+ph+4}" stroke="var(--muted)"/>`+
+       `<text x="${f(x)}" y="${mt+ph+17}" text-anchor="middle" ${tx}>${t.s}</text>`;});
+  s+=`<path d="M${f(X(c.sd))},${f(Y(c.S0))}L${f(X(c.ed))},${f(Y(c.E))}L${f(X(c.ed))},${mt+ph}L${f(X(c.sd))},${mt+ph}Z" fill="currentColor" fill-opacity=".18"/>`;
+  s+=`<line x1="${ml}" x2="${ml}" y1="${mt}" y2="${mt+ph}" stroke="var(--muted)"/><line x1="${ml}" x2="${ml+pw}" y1="${mt+ph}" y2="${mt+ph}" stroke="var(--muted)"/>`;
+  s+=`<line x1="${f(X(c.sd))}" y1="${f(Y(c.S0))}" x2="${f(X(c.ed))}" y2="${f(Y(c.E))}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>`;
+  if(st==='amber'){
+    const k=Math.min(1,Math.max(0,(now-c.sd)/(c.ed-c.sd))),x=ml+k*pw,y=Y(c.S0+(c.E-c.S0)*k);
+    s+=`<circle cx="${f(x)}" cy="${f(y)}" r="9" fill="currentColor" fill-opacity=".25"/><circle cx="${f(x)}" cy="${f(y)}" r="5" fill="currentColor" stroke="var(--card)" stroke-width="2"/>`;
+  }
+  r.svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  r.svg.innerHTML=s;
+}
+
+/* ---------- init ---------- */
+const grid=document.getElementById('grid');
+for(let i=0;i<N;i++){
+  S[i]=load(i);
+  const el=$('section','panel');grid.append(el);refs[i]={el,fields:[]};
+  build(i);
+}
+setInterval(()=>{for(let i=0;i<N;i++)if(S[i].active)update(i);},1000);
+})();
+</script>
+</body>
+</html>
