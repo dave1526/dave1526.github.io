@@ -14,27 +14,29 @@
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-header{padding:18px 24px 6px;font-size:22px;font-weight:700;letter-spacing:.3px}
+header{position:sticky;top:0;z-index:10;background:var(--bg);height:48px;display:flex;align-items:center;padding:0 24px;font-size:22px;font-weight:700;letter-spacing:.3px;transition:font-size .2s,box-shadow .2s}
+header.small{font-size:15px;box-shadow:0 1px 0 var(--line),0 4px 12px rgba(20,30,60,.08)}
 header span{color:var(--accent)}
-main{display:grid;grid-template-columns:1fr;gap:16px;padding:16px 24px 28px}
+main{display:grid;grid-template-columns:1fr;gap:14px;padding:8px 16px 24px}
 @media (min-width:1100px){main{grid-template-columns:repeat(3,1fr)}}
-.panel{position:relative;container-type:inline-size;background:var(--card);border-radius:16px;box-shadow:var(--shadow);min-height:400px;display:flex;flex-direction:column;padding:12px 14px 14px;--c:var(--grey)}
+.panel{position:relative;container-type:inline-size;background:var(--card);border-radius:16px;box-shadow:var(--shadow);min-height:320px;display:flex;flex-direction:column;padding:10px 12px 12px;--c:var(--grey)}
 .panel.st-amber{--c:var(--amber)} .panel.st-grey{--c:var(--grey)} .panel.st-green{--c:var(--green)}
+.panel[hidden]{display:none}
 .panel.empty{background:transparent;border:2px dashed var(--line);box-shadow:none;align-items:center;justify-content:center}
 .add{width:64px;height:64px;border-radius:50%;border:none;background:var(--accent);color:#fff;font-size:36px;line-height:1;cursor:pointer;box-shadow:var(--shadow);transition:transform .15s}
 .add:hover{transform:scale(1.08)}
 .x{position:absolute;top:8px;right:10px;width:28px;height:28px;border:none;border-radius:8px;background:transparent;color:var(--muted);font-size:20px;cursor:pointer}
 .x:hover{background:var(--danger);color:#fff}
-.title{text-align:center;font-size:17px;font-weight:600;padding:0 32px;min-height:28px}
+.title{text-align:center;font-size:15px;font-weight:600;padding:0 32px;min-height:24px}
 .ed{display:inline-block;cursor:text;border-radius:6px;padding:1px 4px;margin:-1px -4px;max-width:100%}
 .ed:hover{background:rgba(127,127,160,.12)}
 .ed .empty{color:var(--muted)}
 .ed input{font:inherit;color:inherit;text-align:inherit;background:transparent;border:none;outline:2px solid var(--accent);border-radius:6px;padding:0 4px;margin:-1px -4px;width:100%;min-width:60px}
 .title .ed{display:inline-block;max-width:100%}
 .title input{text-align:center;width:200px;max-width:100%}
-.body{flex:1;display:grid;grid-template-columns:1fr 2fr 1fr;gap:8px;margin-top:10px;min-height:240px}
-.col{display:flex;flex-direction:column;gap:12px;font-size:13px;min-width:0}
-.col .rad{padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:rgba(127,127,160,.06);transition:background .15s,border-color .15s}
+.body{flex:1;display:grid;grid-template-columns:1fr 2fr 1fr;gap:6px;margin-top:6px;min-height:170px}
+.col{display:flex;flex-direction:column;gap:8px;font-size:12px;min-width:0}
+.col .rad{padding:4px 8px;border:1px solid var(--line);border-radius:8px;background:rgba(127,127,160,.06);transition:background .15s,border-color .15s}
 .col .rad.sel{border-color:var(--accent);background:rgba(79,109,245,.12)}
 .col .rad.sel label{color:var(--accent)}
 .col label{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
@@ -45,23 +47,23 @@ main{display:grid;grid-template-columns:1fr;gap:16px;padding:16px 24px 28px}
 .ed:has(>input[type=date]){position:relative;display:inline-block;min-width:60px}
 .ed>input[type=date]{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;margin:0;font-size:16px;cursor:pointer;-webkit-appearance:none;appearance:none;background:transparent}
 .ed>input[type=date]::-webkit-calendar-picker-indicator{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;cursor:pointer}
-.chart{position:relative;min-width:0;min-height:220px}
+.chart{position:relative;min-width:0;min-height:160px}
 .bad .dt{color:var(--danger)}
 .err{width:fit-content;max-width:100%;box-sizing:border-box;text-align:center;margin:0 auto 10px;padding:8px 12px;border-radius:8px;background:rgba(229,72,77,.12);color:var(--danger);font-weight:600;font-size:13px}
 .chart svg{position:absolute;inset:0;width:100%;height:100%;color:var(--c)}
-.info{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.info{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;font-size:13px;border-top:1px solid var(--line)}
 .info[hidden],.err[hidden]{display:none}
 .info .it{display:flex;flex-direction:column}
 .info .it small{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
 .info .it span{font-variant-numeric:tabular-nums;font-weight:600}
-.info .cur span{font-size:24px;font-weight:800;color:var(--c)}
+.info .cur span{font-size:20px;font-weight:800;color:var(--c)}
 .light{width:20px;height:20px;border-radius:50%;background:var(--c);box-shadow:0 0 10px var(--c)}
 .st-amber .light{animation:blink 2s steps(1) infinite}
 .st-grey .light{box-shadow:none}
 @keyframes blink{0%,49.99%{opacity:1}50%,100%{opacity:.15}}
 @container (max-width:420px){
   .body{grid-template-columns:1fr 1fr}
-  .chart{grid-column:1/-1;grid-row:2;min-height:240px}
+  .chart{grid-column:1/-1;grid-row:2;min-height:165px}
 }
 </style>
 </head>
@@ -224,12 +226,20 @@ function build(i){
   if(!p.active){
     el.classList.add('empty');
     const b=$('button','add','+');b.title='Monitor hozzáadása';
-    b.onclick=()=>{S[i]=blank(i);S[i].active=true;save(i);build(i);};
+    b.onclick=()=>{S[i]=blank(i);S[i].active=true;save(i);build(i);layout();};
     el.append(b);refs[i].fields=[];return;
   }
   const fields=[];
   const x=$('button','x','×');x.title='Törlés';
-  x.onclick=()=>{S[i]=blank(i);save(i);build(i);};
+  x.onclick=()=>{
+    for(let j=i;j<N-1;j++){
+      const n=S[j+1];
+      S[j]=n.active?Object.assign(n,{title:n.title==='Monitor '+(j+2)?'Monitor '+(j+1):n.title}):blank(j);
+    }
+    S[N-1]=blank(N-1);
+    for(let j=i;j<N;j++){save(j);build(j);}
+    layout();
+  };
   const title=editable({max:30,display:()=>p.title||'Monitor '+(i+1),edit:()=>p.title,
     change:v=>{p.title=v;save(i);},
     commit:()=>{if(!p.title.trim()){p.title='Monitor '+(i+1);save(i);}}});
@@ -322,16 +332,16 @@ function draw(i,c,st,now){
   const range=hi-lo,dec=range<5?2:range<50?1:0;
   const yt=[0,1,2,3,4].map(k=>lo+range*k/4);
   const fmtY=v=>group(v.toFixed(dec).replace('.',','));
-  const ml=Math.max(...yt.map(v=>fmtY(v).length))*6.4+16,mr=20,mt=12,mb=26;
+  const ml=Math.max(...yt.map(v=>fmtY(v).length))*6.4+16,mr=20,mt=8,mb=22;
   const pw=W-ml-mr,ph=H-mt-mb;if(pw<30||ph<30)return;
   const X=t=>ml+(t-c.sd)/(c.ed-c.sd)*pw,Y=v=>mt+ph-(v-lo)/range*ph;
-  const f=n=>n.toFixed(1),tx='fill="var(--muted)" font-size="11"';
+  const f=n=>n.toFixed(1),tx='fill="var(--muted)" font-size="10"';
   let s='';
   yt.forEach(v=>{s+=`<line x1="${ml}" x2="${ml+pw}" y1="${f(Y(v))}" y2="${f(Y(v))}" stroke="var(--line)"/>`+
     `<text x="${ml-6}" y="${f(Y(v)+4)}" text-anchor="end" ${tx}>${fmtY(v)}</text>`;});
   xticks(c.sd,c.ed,Math.max(2,Math.floor(pw/60))).forEach(t=>{const x=X(t.d);
     s+=`<line x1="${f(x)}" x2="${f(x)}" y1="${mt+ph}" y2="${mt+ph+4}" stroke="var(--muted)"/>`+
-       `<text x="${f(x)}" y="${mt+ph+17}" text-anchor="middle" ${tx}>${t.s}</text>`;});
+       `<text x="${f(x)}" y="${mt+ph+15}" text-anchor="middle" ${tx}>${t.s}</text>`;});
   s+=`<path d="M${f(X(c.sd))},${f(Y(c.S0))}L${f(X(c.ed))},${f(Y(c.E))}L${f(X(c.ed))},${mt+ph}L${f(X(c.sd))},${mt+ph}Z" fill="currentColor" fill-opacity=".18"/>`;
   s+=`<line x1="${ml}" x2="${ml}" y1="${mt}" y2="${mt+ph}" stroke="var(--muted)"/><line x1="${ml}" x2="${ml+pw}" y1="${mt+ph}" y2="${mt+ph}" stroke="var(--muted)"/>`;
   s+=`<line x1="${f(X(c.sd))}" y1="${f(Y(c.S0))}" x2="${f(X(c.ed))}" y2="${f(Y(c.E))}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>`;
@@ -344,14 +354,24 @@ function draw(i,c,st,now){
 }
 
 /* ---------- init ---------- */
+function layout(){
+  const nx=S.findIndex(p=>!p.active);
+  refs.forEach((r,i)=>{r.el.hidden=!(S[i].active||i===nx);});
+  for(let i=0;i<N;i++)if(S[i].active)draw(i);
+}
 const grid=document.getElementById('grid');
 for(let i=0;i<N;i++){
   S[i]=load(i);
   const el=$('section','panel');grid.append(el);refs[i]={el,fields:[]};
   build(i);
 }
+if(!S.some(p=>p.active)){S[0].active=true;save(0);build(0);}
+layout();
 setInterval(()=>{for(let i=0;i<N;i++)if(S[i].active)update(i);},1000);
 })();
+const hd=document.querySelector('header');
+const onScroll=()=>{const y=window.scrollY,s=hd.classList.contains('small');if(!s&&y>40)hd.classList.add('small');else if(s&&y<8)hd.classList.remove('small');};
+addEventListener('scroll',onScroll,{passive:true});onScroll();
 </script>
 </body>
 </html>
